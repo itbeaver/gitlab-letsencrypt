@@ -12,6 +12,7 @@ const generateRsa = () => RSA.generateKeypairAsync(2048, 65537, {});
 
 const pollUntilDeployed = (url, expectedContent, timeoutMs = 30 * 1000, retries = 10) => {
     if (retries > 0) {
+        console.log(url)
         return request.get({
             url: url,
             simple: false // don't reject on 404
@@ -52,17 +53,17 @@ module.exports = (options) => {
 
     const uploadChallenge = (key, value, repo, domain) => {
         const challengeContent = options.jekyll ?
-                `---\nlayout: null\npermalink: /.well-known/acme-challenge/${key}\n---\n${value}` : value;
+                `---\nlayout: false\npermalink: /.well-known/acme-challenge/${key}\n---\n${value}` : value;
         // Need to bluebird-ify to use .asCallback()
         return Promise.resolve(gitlabRequest.post({
             url: `/projects/${repo.id}/repository/files`,
             body: {
                 file_path: path.posix.resolve('/', options.path, key),
                 commit_message: 'Automated Let\'s Encrypt renewal',
-                branch_name: repo.default_branch,
+                branch_name: 'issue_3',
                 content: challengeContent
             }
-        })).return([`http://${domain}/.well-known/acme-challenge/${key}`, value]);
+        })).return([`http://${domain}/${key}`, value]);
     };
 
     const deleteChallenges = (key, repo) => {
